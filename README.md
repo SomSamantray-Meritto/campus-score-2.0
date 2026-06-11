@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Campus Score 2.0
 
-## Getting Started
+AI-powered visibility tracker that measures how prominently an institution appears across AI-generated search responses.
 
-First, run the development server:
+## What it does
+
+Enter any institution name → the tool runs 121 AI-generated queries across 11 topics → calculates a visibility score based on how often and how highly the institution is ranked in AI answers.
+
+**Report includes:**
+- Overall visibility score + average rank
+- Per-topic breakdown (bar + pie charts)
+- Every query with the full AI answer and brand mentions
+- Competitor landscape (who else appears in your queries)
+- Source domains cited by AI
+
+## Tech Stack
+
+- **Frontend**: Next.js 16, React 19, Tailwind CSS, shadcn/ui, Recharts
+- **Database**: Supabase (PostgreSQL + Realtime)
+- **AI**: OpenAI `gpt-5-nano` (web search enabled) + Perplexity `sonar`
+- **Deployment**: Vercel
+
+## Setup
+
+### 1. Clone and install
+
+```bash
+git clone https://github.com/SomSamantray-Meritto/campus-score-2.0
+cd campus-score-2.0
+npm install
+```
+
+### 2. Environment variables
+
+Create `.env.local` in the project root:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+OPENAI_API_KEY=your_openai_key
+PERPLEXITY_API_KEY=your_perplexity_key
+```
+
+### 3. Database setup
+
+Run these SQL scripts in order in the **Supabase SQL Editor**:
+
+1. `supabase-schema.sql`
+2. `database-migration-weighted-visibility.sql`
+3. `database-migration-add-institution-mention.sql`
+
+Then go to **Database → Replication** and enable Realtime for `analyses` and `queries` tables.
+
+### 4. Run locally
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How it works
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Perplexity** generates 11 topics + 11 queries per topic (121 total) tailored to the institution
+2. **OpenAI** (with web search) answers each query and extracts brand mentions
+3. Visibility score = weighted rank position (Rank 1 = 100%, 2-3 = 50%, 4-5 = 25%, 6+ = 10%)
+4. Results stream into Supabase in real time as queries complete
